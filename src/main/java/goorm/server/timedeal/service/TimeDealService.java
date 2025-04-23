@@ -16,7 +16,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
-import goorm.server.timedeal.config.aws.sqs.SqsMessageSender;
+//import goorm.server.timedeal.config.aws.sqs.SqsMessageSender;
 import goorm.server.timedeal.dto.ReqTimeDeal;
 import goorm.server.timedeal.dto.ResDetailPageTimeDealDto;
 import goorm.server.timedeal.dto.ResPurchaseDto;
@@ -29,8 +29,8 @@ import goorm.server.timedeal.model.User;
 
 import goorm.server.timedeal.model.enums.TimeDealStatus;
 import goorm.server.timedeal.repository.TimeDealRepository;
-import goorm.server.timedeal.service.aws.EventBridgeRuleService;
-import goorm.server.timedeal.service.aws.S3Service;
+//import goorm.server.timedeal.service.aws.EventBridgeRuleService;
+//import goorm.server.timedeal.service.aws.S3Service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,16 +51,16 @@ public class TimeDealService {
 
 	private final TimeDealRepository timeDealRepository;
 
-	private final S3Service s3Service;
-	private final EventBridgeRuleService eventBridgeRuleService;
+	//private final S3Service s3Service;
+	//private final EventBridgeRuleService eventBridgeRuleService;
 
-	@Value("${cloud.aws.lambda.timedeal-update-arn}")
-	private String timeDealUpdateLambdaArn;
+//	@Value("${cloud.aws.lambda.timedeal-update-arn}")
+//	private String timeDealUpdateLambdaArn;
 
 
 	private final RedissonClient redissonClient;  // RedissonClient 주입
 	private final StringRedisTemplate redisTemplate;  // Redis 캐시 주입
-	private final SqsMessageSender sqsMessageSender;
+//	private final SqsMessageSender sqsMessageSender;
 
 
 	/**
@@ -81,7 +81,8 @@ public class TimeDealService {
 		Product product = productService.createProduct(timeDealRequest);
 
 		// 3. 이미지 업로드 (S3에 저장하고 URL 반환)
-		String imageUrl = s3Service.uploadImageFromUrlWithCloudFront(timeDealRequest.imageUrl());
+		//String imageUrl = s3Service.uploadImageFromUrlWithCloudFront(timeDealRequest.imageUrl());
+		String imageUrl = timeDealRequest.imageUrl();
 
 		// 4. 상품 이미지 저장
 		productImageService.saveProductImage(product, imageUrl, "thumbnail");
@@ -169,7 +170,7 @@ public class TimeDealService {
 		return timeDeal;
 	}
 
-
+/*
 	private void createEventBridgeRulesForTimeDeal(TimeDeal timeDeal) {
 		// KST to UTC conversion
 		ZonedDateTime startKST = timeDeal.getStartTime().atZone(ZoneId.of("Asia/Seoul"));
@@ -210,6 +211,7 @@ public class TimeDealService {
 			timeDealUpdateLambdaArn
 		);
 	}
+	*/
 
 
 	/**
@@ -657,7 +659,7 @@ public class TimeDealService {
 
 			if(flag){
 				long sqsStartTime = System.nanoTime();
-				sendMessageToSQS(timeDealId, userId, quantity);  // 비동기 처리로 변경
+				//sendMessageToSQS(timeDealId, userId, quantity);  // 비동기 처리로 변경
 				long sqsEndTime = System.nanoTime();
 				AppLogger.logPerformance("SQS Message Send", sqsEndTime - sqsStartTime,
 						"timeDealId", timeDealId, "userId", userId, "quantity", quantity);
@@ -665,11 +667,11 @@ public class TimeDealService {
 		}
 	}
 
-	@Async
-	public void sendMessageToSQS(Long timeDealId, Long userId, int quantity) {
-		SQSTimeDealDTO sqsMessage = new SQSTimeDealDTO(timeDealId, userId, quantity, "PURCHASED");
-		sqsMessageSender.sendJsonMessage(sqsMessage); // 실제 SQS 메시지 전송 메소드
-	}
+//	@Async
+//	public void sendMessageToSQS(Long timeDealId, Long userId, int quantity) {
+//		SQSTimeDealDTO sqsMessage = new SQSTimeDealDTO(timeDealId, userId, quantity, "PURCHASED");
+//		sqsMessageSender.sendJsonMessage(sqsMessage); // 실제 SQS 메시지 전송 메소드
+//	}
 
 	// 레디스락없이 구현
 	// @Transactional
