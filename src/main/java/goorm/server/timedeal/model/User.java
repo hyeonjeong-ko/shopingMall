@@ -23,6 +23,14 @@ public class User extends BaseEntity {
 	@Column(name = "user_id")
 	private Long userId;
 
+	@Column(name = "login_id", nullable = false, unique = true)
+	@NotNull(message = "Login ID cannot be null")
+	private String loginId;
+
+	public String getUsername() {
+		return username;
+	}
+
 	@Column(name = "username", nullable = false)
 	@NotNull(message = "Username cannot be null")
 	private String username;

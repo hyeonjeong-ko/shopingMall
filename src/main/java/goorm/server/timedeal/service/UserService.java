@@ -2,7 +2,9 @@ package goorm.server.timedeal.service;
 
 import java.util.NoSuchElementException;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import goorm.server.timedeal.model.User;
@@ -11,10 +13,20 @@ import goorm.server.timedeal.repository.UserRepository;
 import jakarta.transaction.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-	@Autowired
-	private UserRepository userRepository;
+	private final UserRepository userRepository;
+
+	private final PasswordEncoder passwordEncoder;
+
+	public User saveUser(User user) {
+		// 비밀번호 인코딩
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
+		// 기본 역할 설정
+		user.setRole(UserRole.REGULAR_USER);
+		return userRepository.save(user);
+	}
 
 	// User 생성
 	@Transactional
