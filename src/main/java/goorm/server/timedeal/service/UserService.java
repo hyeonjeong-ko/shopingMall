@@ -57,4 +57,9 @@ public class UserService {
 		return userRepository.findById(userId)
 			.orElseThrow(() -> new IllegalArgumentException("유효하지 않은 유저입니다."));
 	}
+
+	public User findByLoginId(String loginId) {
+		return userRepository.findByLoginId(loginId)
+				.orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+	}
 }

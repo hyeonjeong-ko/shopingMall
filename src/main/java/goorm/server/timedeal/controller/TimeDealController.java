@@ -37,6 +37,8 @@ public class TimeDealController {
 	private final UserService userService;
 
 	private boolean isAdminUser(Long userId){
+		System.out.println("userId = " + userId);
+		System.out.println("userService.isUserRoleByUserId:" + userService.isUserRoleByUserId(userId, UserRole.TIME_DEAL_MANAGER));
 
 		return userService.isUserRoleByUserId(userId, UserRole.TIME_DEAL_MANAGER);
 	}
@@ -49,6 +51,8 @@ public class TimeDealController {
 
 	@PostMapping
 	public ResponseEntity<BaseResponse<TimeDeal>> createTimeDeal(@RequestBody ReqTimeDeal timeDealRequest) {
+		System.out.println("나 실행돼?***********************");
+		System.out.println("timeDealRequest = " + timeDealRequest);
 
 		BaseResponse<TimeDeal> response;
     		Logger logger = LoggerFactory.getLogger(getClass());
