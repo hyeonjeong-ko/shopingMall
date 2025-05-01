@@ -199,7 +199,9 @@
   });
 </script>
 
-<script>
+<script th:inline="javascript">
+  let userId = /*[[${userId}]]*/ null;
+  console.log("유저 ID 확인:", userId);
   // 모달 열기/닫기
   function openModal() {
     document.getElementById("dealModal").style.display = "flex";
@@ -275,7 +277,7 @@
     }
 
     // 서버로 요청을 보낼 데이터 준비
-    const userId = 1;  // 예시로 유저 ID 1로 설정 (실제 유저 ID로 대체 필요)
+    const userIdToSend = userId;  // 예시로 유저 ID 1로 설정 (실제 유저 ID로 대체 필요)
     const { productId, title, lprice, mallName, brand, category1, image, stock } = selectedProduct;
     // 모달에서 입력된 데이터 가져오기
     const modalData = getModalData();
@@ -286,7 +288,7 @@
     // 서버에서 기대하는 변수명으로 매핑
 // 클라이언트에서 서버로 보낼 데이터 준비
     const timeDealRequest = {
-      userId: userId, // 유저 ID
+      userId: userIdToSend, // 유저 ID
       title: title,
       price: lprice, // 가격
       mallName: mallName,
@@ -302,9 +304,10 @@
 
     };
 
+
     // 요청 보내기
     console.log("timeDealRequest");
-    //console.log(timeDealRequest); // 콘솔에서 데이터가 제대로 형식에 맞는지 확인
+    console.log(timeDealRequest); // 콘솔에서 데이터가 제대로 형식에 맞는지 확인
 
     // 서버에 POST 요청 보내기
     try {
