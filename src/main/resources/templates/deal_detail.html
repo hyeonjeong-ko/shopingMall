@@ -7,6 +7,7 @@
     <link rel="stylesheet" as="style" crossorigin
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
     <style>
         /* 기본 스타일 */
@@ -127,7 +128,403 @@
             color: white;
             font-size: 0.8rem;
         }
-    </style>
+
+
+
+
+        /* 리뷰/QnA 섹션 공통 */
+        .detail-extra {
+            width: 97%;          /* 화면 폭의 90% */
+            max-width: 900px;    /* 원하는 최대 너비로 조정 */
+            margin: 20px auto;   /* 위·아래 20px, 좌·우 중앙 정렬 */
+        }
+
+        .tab-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: #eee;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: #2a71d0;
+            color: white;
+        }
+
+        .tab-content.hidden {
+            display: none;
+        }
+
+        /* 리뷰 항목 */
+        .review-item {
+            background: #f4f4f4;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .review-user {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .review-content {
+            font-size: 0.95rem;
+        }
+
+        /* Q&A 작성 */
+        .qna-write {
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .qna-write textarea {
+            resize: vertical;
+            min-height: 60px;
+            padding: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+
+        .qna-write button {
+            align-self: flex-end;
+            padding: 5px 10px;
+            background: #2a71d0;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Q&A 항목 */
+        .qna-item {
+            background: #fdfdfd;
+            border-left: 3px solid #2a71d0;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+        }
+
+        .qna-question {
+            font-weight: bold;
+        }
+
+        .qna-answer {
+            margin-top: 6px;
+            color: #2a71d0;
+            font-size: 0.9rem;
+        }
+
+        /* 리뷰 별점 스타일 */
+        .review-rating {
+            color: #ffd700;  /* 금색 */
+            margin: 5px 0;
+        }
+
+        .review-rating .empty-star {
+            color: #ccc;  /* 비어있는 별은 회색으로 */
+        }
+
+        .review-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .review-date {
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        /* 댓글 관련 스타일 수정 */
+        .review-comments {
+            margin-top: 15px;
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .comment-counter {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .comment-counter i {
+            font-size: 1.1rem;
+        }
+
+        .comment-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .comment-item:last-child {
+            border-bottom: none;
+        }
+
+        .comment-meta {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            color: #333;
+            margin-right: 8px;
+        }
+
+        .comment-date {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .comment-content {
+            color: #444;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .comment-input-area {
+            margin-top: 15px;
+            display: flex;
+            gap: 8px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .comment-input {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .comment-input:focus {
+            outline: none;
+            border-color: #2a71d0;
+            box-shadow: 0 0 0 2px rgba(42, 113, 208, 0.1);
+        }
+
+        .comment-submit {
+            background: #2a71d0;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .comment-submit:hover {
+            background: #2461b7;
+        }
+
+        /* 댓글 더보기 버튼 스타일 수정 */
+        .show-comments-btn {
+            background: none;
+            border: none;
+            color: #2a71d0;
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .show-comments-btn:hover {
+            color: #2461b7;
+        }
+
+    /* 리뷰 헤더 스타일 */
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 0 10px;
+    }
+
+    .write-review-btn {
+        background: #2a71d0;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .write-review-btn:hover {
+        background: #2461b7;
+        transform: translateY(-1px);
+    }
+
+    /* 모달 스타일 */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        position: relative;
+        background: white;
+        width: 90%;
+        max-width: 500px;
+        margin: 50px auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: #333;
+        font-size: 18px;
+    }
+
+    .close-modal {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .rating-select {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .stars {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .stars input {
+        display: none;
+    }
+
+    .stars label {
+        cursor: pointer;
+        font-size: 28px;
+        color: #ddd;
+        transition: color 0.2s ease;
+    }
+
+    .stars input:checked ~ label,
+    .stars label:hover,
+    .stars label:hover ~ label {
+        color: #ffd700;
+    }
+
+    .review-input textarea {
+        width: 100%;
+        height: 150px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        resize: none;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .char-count {
+        text-align: right;
+        color: #666;
+        font-size: 12px;
+    }
+
+    .modal-footer {
+        padding: 20px;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .modal-footer button {
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+
+    .cancel-btn {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        color: #666;
+    }
+
+    .submit-btn {
+        background: #2a71d0;
+        border: none;
+        color: white;
+    }
+
+    .submit-btn:hover {
+        background: #2461b7;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            transform: translateY(-10px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+</style>
 </head>
 <body>
 <!-- 헤더 -->
@@ -157,7 +554,8 @@
 
             <div class="top-section">
                 <!-- 남은 일수를 D-ㅇ 형식으로 표시 -->
-                <span class="deal-countdown" id="deal-countdown" th:data-end-time="${productDetails.endTime}"></span>                <span class="original-price" th:text="'₩' + ${productDetails.originalPrice}">36,338원</span>
+                <span class="deal-countdown" id="deal-countdown" th:data-end-time="${productDetails.endTime}"></span>
+                <span class="original-price" th:text="'₩' + ${productDetails.originalPrice}">36,338원</span>
             </div>
 
             <div class="bottom-section">
@@ -171,7 +569,151 @@
 
         <button class="buy-button" th:data-deal-id="${productDetails.timeDealId}">구매하기</button>
     </div>
+
+
 </main>
+
+<!-- 상품 하단 리뷰/Q&A 섹션 -->
+<section class="detail-extra">
+    <div class="tab-buttons">
+        <button class="tab-btn active" data-tab="review">리뷰</button>
+        <button class="tab-btn" data-tab="qna">Q&A</button>
+    </div>
+
+    <!-- 리뷰 탭 상단에 버튼 추가 -->
+<!-- 리뷰 탭 영역 -->
+<div class="tab-content" id="review">
+    <div class="review-header">
+        <h3>상품 리뷰</h3>
+        <button class="write-review-btn" onclick="openReviewModal()">
+            <i class="fas fa-pen"></i> 리뷰 작성
+        </button>
+    </div>
+    
+    <!-- 리뷰 목록 -->
+    <div class="review-list">
+        <!-- 기존 리뷰 아이템들... -->
+    </div>
+</div>
+
+<!-- 리뷰 작성 모달 -->
+<div class="modal" id="reviewModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>리뷰 작성</h3>
+            <button class="close-modal" onclick="closeReviewModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="rating-select">
+                <span>별점을 선택해주세요</span>
+                <div class="stars">
+                    <input type="radio" id="star5" name="rating" value="5">
+                    <label for="star5">★</label>
+                    <input type="radio" id="star4" name="rating" value="4">
+                    <label for="star4">★</label>
+                    <input type="radio" id="star3" name="rating" value="3">
+                    <label for="star3">★</label>
+                    <input type="radio" id="star2" name="rating" value="2">
+                    <label for="star2">★</label>
+                    <input type="radio" id="star1" name="rating" value="1">
+                    <label for="star1">★</label>
+                </div>
+            </div>
+            <div class="review-input">
+                <textarea placeholder="리뷰 내용을 입력해주세요. (최소 10자 이상)"></textarea>
+                <div class="char-count">0 / 500</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="cancel-btn" onclick="closeReviewModal()">취소</button>
+            <button class="submit-btn">등록하기</button>
+        </div>
+    </div>
+</div>
+    <div class="review-list">
+            <div class="review-item">
+                <div class="review-meta">
+                    <div class="review-user">user123</div>
+                    <div class="review-rating">
+                        ★★★★★
+                    </div>
+                    <div class="review-date">2024.03.15</div>
+                </div>
+                <div class="review-content">상품 진짜 좋아요! 배송도 빠르고 만족해요.</div>
+            
+            <!-- 댓글 섹션 -->
+            <div class="review-comments">
+                <button class="show-comments-btn">댓글 3개 모두 보기</button>
+                
+                <!-- 댓글 목록 -->
+                <div class="comment-item">
+                    <div class="comment-meta">
+                        <span class="comment-author">hong_gildong</span>
+                        <span class="comment-date">2024.03.15</span>
+                    </div>
+                    <div class="comment-content">저도 이 상품 좋았어요!</div>
+                </div>
+                
+                <div class="comment-item">
+                    <div class="comment-meta">
+                        <span class="comment-author">kim_happy</span>
+                        <span class="comment-date">2024.03.15</span>
+                    </div>
+                    <div class="comment-content">어떤 점이 특히 좋으셨나요?</div>
+                </div>
+                
+                <!-- 댓글 입력 영역 -->
+                <div class="comment-input-area">
+                    <input type="text" class="comment-input" placeholder="댓글을 입력하세요...">
+                    <button class="comment-submit">등록</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 두 번째 리뷰 예시 -->
+        <div class="review-item">
+            <div class="review-meta">
+                <div class="review-user">customer789</div>
+                <div class="review-rating">
+                    ★★★★<span class="empty-star">★</span>
+                </div>
+                <div class="review-date">2024.03.14</div>
+            </div>
+            <div class="review-content">전반적으로 만족스럽습니다. 배송이 조금 늦었네요.</div>
+            
+            <!-- 댓글 섹션 -->
+            <div class="review-comments">
+                <button class="show-comments-btn">댓글 1개 보기</button>
+                
+                <!-- 댓글 입력 영역 -->
+                <div class="comment-input-area">
+                    <input type="text" class="comment-input" placeholder="댓글을 입력하세요...">
+                    <button class="comment-submit">등록</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 더보기 버튼 -->
+        <button class="load-more">리뷰 더보기</button>
+    </div>
+</div>
+
+    <!-- Q&A 영역 -->
+    <div class="tab-content hidden" id="qna">
+        <div class="qna-write">
+            <textarea placeholder="질문을 입력해주세요..."></textarea>
+            <button>작성</button>
+        </div>
+
+        <div class="qna-list">
+            <div class="qna-item">
+                <div class="qna-user">user567</div>
+                <div class="qna-question">이 상품은 재입고 언제 되나요?</div>
+                <div class="qna-answer">[관리자] 다음주 중 입고 예정입니다.</div>
+            </div>
+        </div>
+    </div>
+</section>
 
 
 <!-- 푸터 -->
@@ -268,6 +810,40 @@
                 }
             });
         }
+    });
+</script>
+<script>
+    function openReviewModal() {
+        document.getElementById('reviewModal').style.display = 'block';
+        document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
+    }
+
+    function closeReviewModal() {
+        document.getElementById('reviewModal').style.display = 'none';
+        document.body.style.overflow = 'auto'; // 배경 스크롤 복구
+    }
+
+    // ESC 키로 모달 닫기
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeReviewModal();
+        }
+    });
+
+    // 모달 외부 클릭시 닫기
+    document.getElementById('reviewModal').addEventListener('click', function(event) {
+        if (event.target === this) {
+            closeReviewModal();
+        }
+    });
+
+    // 글자수 카운트
+    const textarea = document.querySelector('.review-input textarea');
+    const charCount = document.querySelector('.char-count');
+    
+    textarea.addEventListener('input', function() {
+        const length = this.value.length;
+        charCount.textContent = `${length} / 500`;
     });
 </script>
 </body>
