@@ -585,15 +585,17 @@
 <div class="tab-content" id="review">
     <div class="review-header">
         <h3>상품 리뷰</h3>
-        <button class="write-review-btn" onclick="openReviewModal()">
+        <button class="write-review-btn">
             <i class="fas fa-pen"></i> 리뷰 작성
         </button>
     </div>
     
     <!-- 리뷰 목록 -->
     <div class="review-list">
-        <!-- 기존 리뷰 아이템들... -->
+    <div id="reviewContainer">
+        <!-- 리뷰가 여기에 동적으로 로드됩니다 -->
     </div>
+    <div id="pagination"></div>
 </div>
 
 <!-- 리뷰 작성 모달 -->
@@ -664,9 +666,10 @@
                 
                 <!-- 댓글 입력 영역 -->
                 <div class="comment-input-area">
-                    <input type="text" class="comment-input" placeholder="댓글을 입력하세요...">
-                    <button class="comment-submit">등록</button>
+                    <input type="text" id="comment-input-${review.id}" class="comment-input" placeholder="댓글을 입력하세요...">
+                    <button class="comment-submit" onclick="submitComment(${review.id})">등록</button>
                 </div>
+
             </div>
         </div>
 
@@ -846,5 +849,7 @@
         charCount.textContent = `${length} / 500`;
     });
 </script>
+    <!-- 기존 스크립트들 -->
+    <script src="/js/review.js"></script>
 </body>
 </html>
