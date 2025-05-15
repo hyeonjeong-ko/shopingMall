@@ -8,12 +8,15 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import goorm.server.timedeal.logging.AppLogger;
+import jakarta.persistence.EntityNotFoundException;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 //import goorm.server.timedeal.config.aws.sqs.SqsMessageSender;
@@ -26,6 +29,7 @@ import goorm.server.timedeal.dto.SQSTimeDealDTO;
 import goorm.server.timedeal.model.Product;
 import goorm.server.timedeal.model.TimeDeal;
 import goorm.server.timedeal.model.User;
+import goorm.server.timedeal.model.Purchase;
 
 import goorm.server.timedeal.model.enums.TimeDealStatus;
 import goorm.server.timedeal.repository.TimeDealRepository;
@@ -296,12 +300,16 @@ public class TimeDealService {
 	 * @return 구매 성공 여부 메시지.
 	 */
 	@Transactional
-	public String purchaseTimeDeal(Long timeDealId, int quantity) {
-		// 메서드 호출 로그
-		AppLogger.logBusinessEvent("purchaseTimeDeal called",
-				"timeDealId", timeDealId, "quantity", quantity);
+	public String purchaseTimeDeal(Long timeDealId, int quantity, @AuthenticationPrincipal UserDetails userDetails) {
 
 		try {
+			// 현재 인증된 사용자의 loginId 가져오기
+			String loginId = userDetails.getUsername();
+			
+			// 사용자 정보 조회
+			User user = userService.findByLoginId(loginId);
+//					.orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
 			// 타임딜 조회 시 비관적 락 사용
 			TimeDeal timeDeal = timeDealRepository.findByIdWithLock(timeDealId)
 					.orElseThrow(() -> {
@@ -322,23 +330,17 @@ public class TimeDealService {
 
 			// 재고 감소
 			timeDeal.setStockQuantity(timeDeal.getStockQuantity() - quantity);
-			AppLogger.logBusinessEvent("Stock updated",
-					"timeDealId", timeDealId,
-					"remainingStock", timeDeal.getStockQuantity());
+
+			// PurchaseService를 사용하여 구매 기록 생성
+			ResPurchaseDto purchaseResult = purchaseService.createPurchaseRecord(timeDeal, user, quantity);
+
 
 			// 구매 완료 메시지 반환
-			String resultMessage = "구매가 완료되었습니다. 남은 재고: " + timeDeal.getStockQuantity() + "개";
-			AppLogger.logBusinessEvent("Purchase completed",
-					"timeDealId", timeDealId,
-					"quantity", quantity,
-					"remainingStock", timeDeal.getStockQuantity());
-			return resultMessage;
+			return "구매가 완료되었습니다. 남은 재고: " + timeDeal.getStockQuantity() + "개";
 
 		} catch (Exception e) {
-			// 에러 로그
-			AppLogger.logError("Error during purchaseTimeDeal", e,
-					"timeDealId", timeDealId, "quantity", quantity);
-			throw e; // 예외 다시 던지기
+
+			throw e;
 		}
 	}
 
