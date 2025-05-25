@@ -1,5 +1,8 @@
 package goorm.server.timedeal.dto;
 
+import goorm.server.timedeal.model.Review;
+import goorm.server.timedeal.model.TimeDeal;
+import goorm.server.timedeal.model.User;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -16,4 +19,7 @@ public record ReviewRequestDto(
 
         @NotNull(message = "상품 ID가 필요합니다")
         Long timeDealId
-) {}
+) {
+
+
+}

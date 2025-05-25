@@ -1,9 +1,10 @@
 package goorm.server.timedeal.model;
 
+import goorm.server.timedeal.dto.ReviewRequestDto;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+import java.sql.ConnectionBuilder;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.List;
 @Entity
 @Table(name = "review")
 @Getter @Setter
+@NoArgsConstructor
+@Builder @AllArgsConstructor
 public class Review extends BaseEntity {
 
     @Id
@@ -35,9 +38,22 @@ public class Review extends BaseEntity {
     @Column(nullable = false, length = 1000)
     private String content;
 
+    @Builder.Default
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReviewComment> comments = new ArrayList<>();
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+
+    public static Review createReview(User user, TimeDeal timeDeal, ReviewRequestDto requestDto) {
+        return Review.builder()
+                .user(user)
+                .timeDeal(timeDeal)
+                .rating(requestDto.rating())
+                .content(requestDto.content())
+                .build();
+    }
+
+
 }
