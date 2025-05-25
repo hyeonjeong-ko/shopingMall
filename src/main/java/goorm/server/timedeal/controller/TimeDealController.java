@@ -27,6 +27,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,6 +39,8 @@ public class TimeDealController {
 	private final UserService userService;
 
 	private boolean isAdminUser(Long userId){
+		System.out.println("userId = " + userId);
+		System.out.println("userService.isUserRoleByUserId:" + userService.isUserRoleByUserId(userId, UserRole.TIME_DEAL_MANAGER));
 
 		return userService.isUserRoleByUserId(userId, UserRole.TIME_DEAL_MANAGER);
 	}
@@ -49,6 +53,8 @@ public class TimeDealController {
 
 	@PostMapping
 	public ResponseEntity<BaseResponse<TimeDeal>> createTimeDeal(@RequestBody ReqTimeDeal timeDealRequest) {
+		System.out.println("나 실행돼?***********************");
+		System.out.println("timeDealRequest = " + timeDealRequest);
 
 		BaseResponse<TimeDeal> response;
     		Logger logger = LoggerFactory.getLogger(getClass());
@@ -143,25 +149,31 @@ public class TimeDealController {
 	 */
 	@PostMapping("/{dealId}/purchases")
 	public ResponseEntity<BaseResponse<String>> purchaseTimeDeal(
-		@PathVariable Long dealId,
-		@RequestParam int quantity) {
+    @PathVariable Long dealId,
+    @RequestParam int quantity,
+    @AuthenticationPrincipal UserDetails userDetails) {
 
-		BaseResponse<String> response;
+    BaseResponse<String> response;
 
-		try {
-			String resultMessage = timeDealService.purchaseTimeDeal(dealId, quantity);
-			response = new BaseResponse<>(BaseResponseStatus.SUCCESS, resultMessage);
-			return new ResponseEntity<>(response, HttpStatus.OK);
-		} catch (IllegalStateException e) {
-			// 재고 부족 등의 예외 처리
-			response = new BaseResponse<>(BaseResponseStatus.STOCK_UNAVAILABLE, e.getMessage());
-			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-		} catch (Exception e) {
-			// 기타 예외 처리
-			response = new BaseResponse<>(BaseResponseStatus.ERROR, "구매 실패: " + e.getMessage());
-			return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
+    try {
+        // Spring Security를 통해 가져온 현재 인증된 사용자 정보로 구매 진행
+        String resultMessage = timeDealService.purchaseTimeDeal(dealId, quantity, userDetails);
+        response = new BaseResponse<>(BaseResponseStatus.SUCCESS, resultMessage);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch (IllegalStateException e) {
+        // 재고 부족 등의 예외 처리
+        response = new BaseResponse<>(BaseResponseStatus.STOCK_UNAVAILABLE, e.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    } catch (EntityNotFoundException e) {
+        // 사용자나 타임딜을 찾을 수 없는 경우
+        response = new BaseResponse<>(BaseResponseStatus.TIME_DEAL_NOT_FOUND, e.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    } catch (Exception e) {
+        // 기타 예외 처리
+        response = new BaseResponse<>(BaseResponseStatus.ERROR, "구매 실패: " + e.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
 
 
 	@GetMapping("/deals/{timeDealId}")

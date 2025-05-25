@@ -8,15 +8,18 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import goorm.server.timedeal.logging.AppLogger;
+import jakarta.persistence.EntityNotFoundException;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import goorm.server.timedeal.config.aws.sqs.SqsMessageSender;
+//import goorm.server.timedeal.config.aws.sqs.SqsMessageSender;
 import goorm.server.timedeal.dto.ReqTimeDeal;
 import goorm.server.timedeal.dto.ResDetailPageTimeDealDto;
 import goorm.server.timedeal.dto.ResPurchaseDto;
@@ -26,11 +29,12 @@ import goorm.server.timedeal.dto.SQSTimeDealDTO;
 import goorm.server.timedeal.model.Product;
 import goorm.server.timedeal.model.TimeDeal;
 import goorm.server.timedeal.model.User;
+import goorm.server.timedeal.model.Purchase;
 
 import goorm.server.timedeal.model.enums.TimeDealStatus;
 import goorm.server.timedeal.repository.TimeDealRepository;
-import goorm.server.timedeal.service.aws.EventBridgeRuleService;
-import goorm.server.timedeal.service.aws.S3Service;
+//import goorm.server.timedeal.service.aws.EventBridgeRuleService;
+//import goorm.server.timedeal.service.aws.S3Service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,16 +55,16 @@ public class TimeDealService {
 
 	private final TimeDealRepository timeDealRepository;
 
-	private final S3Service s3Service;
-	private final EventBridgeRuleService eventBridgeRuleService;
+	//private final S3Service s3Service;
+	//private final EventBridgeRuleService eventBridgeRuleService;
 
-	@Value("${cloud.aws.lambda.timedeal-update-arn}")
-	private String timeDealUpdateLambdaArn;
+//	@Value("${cloud.aws.lambda.timedeal-update-arn}")
+//	private String timeDealUpdateLambdaArn;
 
 
 	private final RedissonClient redissonClient;  // RedissonClient 주입
 	private final StringRedisTemplate redisTemplate;  // Redis 캐시 주입
-	private final SqsMessageSender sqsMessageSender;
+//	private final SqsMessageSender sqsMessageSender;
 
 
 	/**
@@ -81,7 +85,8 @@ public class TimeDealService {
 		Product product = productService.createProduct(timeDealRequest);
 
 		// 3. 이미지 업로드 (S3에 저장하고 URL 반환)
-		String imageUrl = s3Service.uploadImageFromUrlWithCloudFront(timeDealRequest.imageUrl());
+		//String imageUrl = s3Service.uploadImageFromUrlWithCloudFront(timeDealRequest.imageUrl());
+		String imageUrl = timeDealRequest.imageUrl();
 
 		// 4. 상품 이미지 저장
 		productImageService.saveProductImage(product, imageUrl, "thumbnail");
@@ -169,7 +174,7 @@ public class TimeDealService {
 		return timeDeal;
 	}
 
-
+/*
 	private void createEventBridgeRulesForTimeDeal(TimeDeal timeDeal) {
 		// KST to UTC conversion
 		ZonedDateTime startKST = timeDeal.getStartTime().atZone(ZoneId.of("Asia/Seoul"));
@@ -210,6 +215,7 @@ public class TimeDealService {
 			timeDealUpdateLambdaArn
 		);
 	}
+	*/
 
 
 	/**
@@ -294,12 +300,16 @@ public class TimeDealService {
 	 * @return 구매 성공 여부 메시지.
 	 */
 	@Transactional
-	public String purchaseTimeDeal(Long timeDealId, int quantity) {
-		// 메서드 호출 로그
-		AppLogger.logBusinessEvent("purchaseTimeDeal called",
-				"timeDealId", timeDealId, "quantity", quantity);
+	public String purchaseTimeDeal(Long timeDealId, int quantity, @AuthenticationPrincipal UserDetails userDetails) {
 
 		try {
+			// 현재 인증된 사용자의 loginId 가져오기
+			String loginId = userDetails.getUsername();
+			
+			// 사용자 정보 조회
+			User user = userService.findByLoginId(loginId);
+//					.orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
 			// 타임딜 조회 시 비관적 락 사용
 			TimeDeal timeDeal = timeDealRepository.findByIdWithLock(timeDealId)
 					.orElseThrow(() -> {
@@ -320,23 +330,17 @@ public class TimeDealService {
 
 			// 재고 감소
 			timeDeal.setStockQuantity(timeDeal.getStockQuantity() - quantity);
-			AppLogger.logBusinessEvent("Stock updated",
-					"timeDealId", timeDealId,
-					"remainingStock", timeDeal.getStockQuantity());
+
+			// PurchaseService를 사용하여 구매 기록 생성
+			ResPurchaseDto purchaseResult = purchaseService.createPurchaseRecord(timeDeal, user, quantity);
+
 
 			// 구매 완료 메시지 반환
-			String resultMessage = "구매가 완료되었습니다. 남은 재고: " + timeDeal.getStockQuantity() + "개";
-			AppLogger.logBusinessEvent("Purchase completed",
-					"timeDealId", timeDealId,
-					"quantity", quantity,
-					"remainingStock", timeDeal.getStockQuantity());
-			return resultMessage;
+			return "구매가 완료되었습니다. 남은 재고: " + timeDeal.getStockQuantity() + "개";
 
 		} catch (Exception e) {
-			// 에러 로그
-			AppLogger.logError("Error during purchaseTimeDeal", e,
-					"timeDealId", timeDealId, "quantity", quantity);
-			throw e; // 예외 다시 던지기
+
+			throw e;
 		}
 	}
 
@@ -657,7 +661,7 @@ public class TimeDealService {
 
 			if(flag){
 				long sqsStartTime = System.nanoTime();
-				sendMessageToSQS(timeDealId, userId, quantity);  // 비동기 처리로 변경
+				//sendMessageToSQS(timeDealId, userId, quantity);  // 비동기 처리로 변경
 				long sqsEndTime = System.nanoTime();
 				AppLogger.logPerformance("SQS Message Send", sqsEndTime - sqsStartTime,
 						"timeDealId", timeDealId, "userId", userId, "quantity", quantity);
@@ -665,11 +669,11 @@ public class TimeDealService {
 		}
 	}
 
-	@Async
-	public void sendMessageToSQS(Long timeDealId, Long userId, int quantity) {
-		SQSTimeDealDTO sqsMessage = new SQSTimeDealDTO(timeDealId, userId, quantity, "PURCHASED");
-		sqsMessageSender.sendJsonMessage(sqsMessage); // 실제 SQS 메시지 전송 메소드
-	}
+//	@Async
+//	public void sendMessageToSQS(Long timeDealId, Long userId, int quantity) {
+//		SQSTimeDealDTO sqsMessage = new SQSTimeDealDTO(timeDealId, userId, quantity, "PURCHASED");
+//		sqsMessageSender.sendJsonMessage(sqsMessage); // 실제 SQS 메시지 전송 메소드
+//	}
 
 	// 레디스락없이 구현
 	// @Transactional
@@ -714,6 +718,13 @@ public class TimeDealService {
 	// 		throw new IllegalStateException("재고가 부족합니다. 현재 재고: " + currentStockQuantity + "개");
 	// 	}
 	// }
+
+
+
+	public TimeDeal findTimeDealById(Long timeDealId) {
+		return timeDealRepository.findById(timeDealId)
+				.orElseThrow(() -> new EntityNotFoundException("해당 타임딜을 찾을 수 없습니다."));
+	}
 
 
 }

@@ -37,7 +37,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'  // JPA 기본 종속성
 	implementation 'org.springframework.boot:spring-boot-starter-validation' // 유효성 검사
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf' // Thymeleaf 관련 종속성
-	//implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator' // 모니터링 및 관리를 위한 종속성
 	implementation 'org.springframework.data:spring-data-envers'
 
@@ -46,14 +46,16 @@ dependencies {
 
 	// Thymeleaf
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+
 
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0'
 
 
 	// S3
-	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
-	implementation 'javax.xml.bind:jaxb-api:2.3.1'
-	implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+	//implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+	//implementation 'javax.xml.bind:jaxb-api:2.3.1'
+	//implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
 
 	// aws eventBridge AWS SDK for EventBridge (AWS SDK BOM)
 	implementation platform('software.amazon.awssdk:bom:2.20.56')
@@ -62,9 +64,9 @@ dependencies {
 	implementation 'software.amazon.awssdk:lambda'
 
 	// 메시지 큐 (Spring 3.0 버전 이상)
-	implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:3.0.1")
-	implementation 'io.awspring.cloud:spring-cloud-aws-starter-sqs'
-	implementation 'io.awspring.cloud:spring-cloud-starter-aws-messaging:2.4.1'
+	//implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:3.0.1")
+	//implementation 'io.awspring.cloud:spring-cloud-aws-starter-sqs'
+	//implementation 'io.awspring.cloud:spring-cloud-starter-aws-messaging:2.4.1'
 
 	// redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
@@ -72,12 +74,12 @@ dependencies {
 	implementation 'org.redisson:redisson-spring-boot-starter:3.20.0'
 
 	//log
-	implementation "ca.pjer:logback-awslogs-appender:1.6.0"
+	//implementation "ca.pjer:logback-awslogs-appender:1.6.0"
 
-	implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
+	//implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
 
 	//logstash
-	implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+	//implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
 
 

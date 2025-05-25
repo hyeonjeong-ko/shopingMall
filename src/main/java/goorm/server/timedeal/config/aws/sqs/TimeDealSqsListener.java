@@ -1,5 +1,5 @@
-package goorm.server.timedeal.config.aws.sqs;
-
+//package goorm.server.timedeal.config.aws.sqs;
+//
 // @Slf4j
 // @Component
 // @RequiredArgsConstructor

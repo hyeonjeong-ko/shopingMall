@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>내 계정 관리</title>
+</head>
+<body>
+<h1>내 계정 정보</h1>
+
+<p><strong>로그인 ID:</strong> <span th:text="${user.loginId}"></span></p>
+<p><strong>이름 (username):</strong> <span th:text="${user.username}"></span></p>
+<p><strong>이메일:</strong> <span th:text="${user.email}"></span></p>
+
+<a href="/v1">← 홈으로 가기</a>
+</body>
+</html>

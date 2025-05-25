@@ -1,7 +1,12 @@
 package goorm.server.timedeal.viewcontroller;
 
+import goorm.server.timedeal.model.User;
+import goorm.server.timedeal.service.UserService;
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,22 +20,22 @@ import goorm.server.timedeal.service.TimeDealService;
  * */
 @RequestMapping("/v1/admin/deals")
 @Controller
+@RequiredArgsConstructor
 public class AdminPageController {
 
 	private final TimeDealService timeDealService;
-
-	// 생성자 주입
-	public AdminPageController(TimeDealService timeDealService) {
-		this.timeDealService = timeDealService;
-	}
-
+	private final UserService userService;
 
 	@GetMapping("")
-	public String showTimeDealReservationPage(Model model) {
-		// 타임딜 리스트 가져오기
+	public String showTimeDealReservationPage(Model model,
+											  @AuthenticationPrincipal UserDetails userDetails) {
+
+		User user = userService.findByLoginId(userDetails.getUsername());
+
 		List<ResTimeDealListDto> timeDeals = timeDealService.getTimeDealList();
 
 		model.addAttribute("timeDeals", timeDeals);
+		model.addAttribute("userId", user.getUserId());
 
 		return "deal_admin";
 	}

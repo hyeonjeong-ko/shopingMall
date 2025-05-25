@@ -13,14 +13,14 @@ spring:
     password: ${DB_PASSWORD}
 #    hikari:
 #      minimum-idle: 5
-#      maximum-pool-size: 10
+#      maximum-pool-size: 10  #50
 #      idle-timeout: 30000
 #      connection-timeout: 30000
 #      pool-name: HikariCP
 #      max-lifetime: 60000
   hikari:
     minimum-idle: 10                # 유휴 커넥션의 최소 개수를 늘려서 더 많은 커넥션이 항상 대기하도록 설정
-    maximum-pool-size: 50           # 최대 커넥션 풀 크기를 늘려서 동시 요청을 더 많이 처리하도록 설정
+    maximum-pool-size: 30           # 최대 커넥션 풀 크기를 늘려서 동시 요청을 더 많이 처리하도록 설정
     idle-timeout: 30000             # 유휴 커넥션이 풀에서 제거되기 전 대기 시간 (30초로 적당)
     connection-timeout: 30000       # 커넥션 요청 시 타임아웃 (30초로 설정하여 커넥션 대기 시간을 길게 설정)
     pool-name: HikariCP
@@ -30,6 +30,7 @@ spring:
 
   data:
     redis:
+
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
       ssl:

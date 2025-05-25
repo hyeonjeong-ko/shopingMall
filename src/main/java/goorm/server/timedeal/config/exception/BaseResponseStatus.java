@@ -12,7 +12,16 @@ public enum BaseResponseStatus {
 	STOCK_UNAVAILABLE(false, 2010, "재고가 부족합니다."),
 
 	INVALID_INPUT(false, 2011, "잘못된 입력입니다."),
-	TIME_DEAL_NOT_FOUND(false, 2012, "해당 타임딜을 찾을 수 없습니다.");
+	TIME_DEAL_NOT_FOUND(false, 2012, "해당 타임딜을 찾을 수 없습니다."),
+
+
+	// Review 관련 상태
+	PURCHASE_NOT_FOUND(false, 2020, "구매 내역이 없는 상품입니다."),
+	REVIEW_ALREADY_EXISTS(false, 2021, "이미 리뷰를 작성하셨습니다."),
+	REVIEW_NOT_FOUND(false, 2022, "리뷰를 찾을 수 없습니다."),
+	COMMENT_NOT_FOUND(false, 2023, "댓글을 찾을 수 없습니다."),
+	UNAUTHORIZED_COMMENT_DELETE(false, 2024, "댓글을 삭제할 권한이 없습니다."),
+	USER_NOT_FOUND(false, 2025, "사용자를 찾을 수 없습니다.");
 
 
 	/*

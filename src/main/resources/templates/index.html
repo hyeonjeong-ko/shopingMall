@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -624,6 +625,12 @@
                     // 활성 상태
                     card.classList.add('product');
                     card.classList.remove('coming-soon');
+
+                    // 커밍순 글자 숨기기
+                    const overlay = card.querySelector('.overlay');
+                    const overlayContent = card.querySelector('.overlay-content');
+                    if (overlay)          overlay.style.display = 'none';
+                    if (overlayContent)   overlayContent.style.display = 'none';
 
                     if (link) {
                         link.setAttribute('href', `/v1/products/${card.getAttribute('data-product-id')}`);
