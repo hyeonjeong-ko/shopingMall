@@ -1,6 +1,7 @@
 package goorm.server.timedeal.viewcontroller;
 
 import goorm.server.timedeal.dto.ReviewResponseDto;
+import goorm.server.timedeal.service.ReviewQueryService;
 import goorm.server.timedeal.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +27,12 @@ import java.util.List;
 public class ProductDetailController {
 
 	private final TimeDealService timeDealService;
-	private final ReviewService reviewService;
+	private final ReviewQueryService reviewQueryService;
 
 	@GetMapping("/products/{productId}")
 	public String getProductDetailPage(@PathVariable Long productId, Model model) {
     ResDetailPageTimeDealDto productDetails = timeDealService.getTimeDealDetails(productId);
-    Page<ReviewResponseDto> reviews = reviewService.getReviewsByTimeDeal(productId,
+    Page<ReviewResponseDto> reviews = reviewQueryService.getReviewsByTimeDeal(productId,
             PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt")));
 
     model.addAttribute("productDetails", productDetails);

@@ -1,108 +1,126 @@
 package goorm.server.timedeal.controller;
 
+import goorm.server.timedeal.config.exception.BaseResponse;
+import goorm.server.timedeal.config.exception.BaseResponseStatus;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
-
-import goorm.server.timedeal.config.exception.BaseResponse;
-import goorm.server.timedeal.config.exception.BaseResponseStatus;
-
 /**
- * Product 조회 및 타임딜 등록
- * */
+ * 네이버 쇼핑 API 기반 상품 검색 컨트롤러
+ */
 @RestController
 @RequestMapping("/api/products")
+@RequiredArgsConstructor
 public class ProductSearchController {
 
-	@Value("${naver.client-id}")
-	private String clientId;
+    private static final int ITEMS_PER_PAGE = 10;
+    private static final int MAX_SEARCHABLE_ITEMS = 1000;
 
-	@Value("${naver.client-secret}")
-	private String clientSecret;
+    @Value("${naver.client-id}")
+    private String clientId;
 
-	@Value("${naver.api-url}")
-	private String NAVER_API_URL;
+    @Value("${naver.client-secret}")
+    private String clientSecret;
 
-	/**
-	 * 상품을 검색하는 함수. (Naver Shopping API 사용)
-	 * 주어진 검색 조건에 맞는 상품들을 데이터베이스에서 조회하여 반환.
-	 *
-	 * @param searchQuery 검색할 상품의 키워드나 조건. 예를 들어, 상품명, 브랜드, 카테고리 등.
-	 * @param category 상품 카테고리. 선택적으로 필터링 가.
-	 * @param priceRange 가격 범위. 선택적으로 필터링할 가능.
-	 * @param pageNum 검색 결과 페이지 번호. 기본값은 1로 설정.
-	 * @param pageSize 한 페이지에 표시될 상품의 수. 기본값은 10으로 설정. (최대 100페이지)
-	 *
-	 * @return 검색 조건에 맞는 상품들의 리스트. 조건에 맞는 상품이 없으면 빈 리스트를 반환.
-	 */
-	@GetMapping("")
-	public ResponseEntity<BaseResponse<Map<String, Object>>> searchProducts(
-		@RequestParam String query,
-		@RequestParam(defaultValue = "1") int page) {
+    @Value("${naver.api-url}")
+    private String naverApiUrl;
 
-		int display = 10; // 페이지당 항목 수
+    private final RestTemplate restTemplate;
 
-		// 총 페이지 수 계산
-		String apiUrl = NAVER_API_URL + "?query=" + query + "&display=" + display + "&start=1"; // 임시로 시작 페이지는 1로 설정
+    /**
+     * 네이버 쇼핑 상품 검색 API
+     * 
+     * @apiNote 네이버 API 정책상 최대 1000개 항목까지만 조회 가능
+     */
+    @GetMapping
+    public ResponseEntity<BaseResponse<Map<String, Object>>> searchProducts(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "1") int page) {
+        
+        Map<String, Object> searchResult = executeNaverApiSearch(query, page);
+        return ResponseEntity.ok(new BaseResponse<>(BaseResponseStatus.SUCCESS, searchResult));
+    }
 
-		// HTTP 헤더 설정
-		HttpHeaders headers = new HttpHeaders();
-		headers.set("X-Naver-Client-Id", clientId);
-		headers.set("X-Naver-Client-Secret", clientSecret);
-		HttpEntity<String> entity = new HttpEntity<>(headers);
+    private Map<String, Object> executeNaverApiSearch(String query, int page) {
+        Map<String, Object> initialSearchResult = performInitialSearch(query);
+        int totalResults = extractTotalResults(initialSearchResult);
+        int totalPages = calculateTotalPages(totalResults);
+        int adjustedPage = adjustPageNumber(page, totalPages);
+        int startIndex = calculateStartIndex(adjustedPage);
 
-		// API 호출
-		RestTemplate restTemplate = new RestTemplate();
-		ResponseEntity<Map> response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, Map.class);
+        Map<String, Object> finalSearchResult = performPagedSearch(query, startIndex);
+        return createSearchResponse(finalSearchResult, adjustedPage, totalResults, totalPages);
+    }
 
-		// 응답 데이터 처리
-		Map<String, Object> result = new HashMap<>();
-		Map<String, Object> body = response.getBody();
-		assert body != null;
+    private Map<String, Object> performInitialSearch(String query) {
+        String initialApiUrl = buildApiUrl(query, 1);
+        return executeApiCall(initialApiUrl);
+    }
 
-		// 전체 검색 결과 수 확인
-		int totalResults = (int) body.getOrDefault("total", 0);
+    private Map<String, Object> performPagedSearch(String query, int startIndex) {
+        String pagedApiUrl = buildApiUrl(query, startIndex);
+        return executeApiCall(pagedApiUrl);
+    }
 
-		// totalResults 10으로 나누어 총 페이지 수 계산
-		int totalPages = (int) Math.ceil((double) totalResults / display);
+    private String buildApiUrl(String query, int startIndex) {
+        return String.format("%s?query=%s&display=%d&start=%d", 
+                naverApiUrl, query, ITEMS_PER_PAGE, startIndex);
+    }
 
-		// 페이지 번호가 총 페이지 수보다 크면 마지막 페이지로 조정
-		if (page > totalPages) {
-			page = totalPages;
-		}
+    private Map<String, Object> executeApiCall(String apiUrl) {
+        HttpEntity<String> requestEntity = createRequestHeader();
+        ResponseEntity<Map> response = restTemplate.exchange(
+                apiUrl, 
+                HttpMethod.GET, 
+                requestEntity, 
+                Map.class
+        );
+        return response.getBody();
+    }
 
-		// 페이지 번호에 맞게 시작 인덱스를 계산
-		int start = (page - 1) * display + 1;
+    private HttpEntity<String> createRequestHeader() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Naver-Client-Id", clientId);
+        headers.set("X-Naver-Client-Secret", clientSecret);
+        return new HttpEntity<>(headers);
+    }
 
-		if (start > 1000) { // start 값이 1000을 초과하지 않도록 제한 (API 자체 제한)
-			start = 1000;
-		}
+    private int extractTotalResults(Map<String, Object> searchResult) {
+        return (int) searchResult.getOrDefault("total", 0);
+    }
 
-		// API URL (start 값 수정)
-		apiUrl = NAVER_API_URL + "?query=" + query + "&display=" + display + "&start=" + start;
+    private int calculateTotalPages(int totalResults) {
+        return (int) Math.ceil((double) totalResults / ITEMS_PER_PAGE);
+    }
 
-		// API 호출
-		response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, Map.class);
-		body = response.getBody();
-		assert body != null;
+    private int adjustPageNumber(int requestedPage, int totalPages) {
+        return Math.min(requestedPage, totalPages);
+    }
 
-		result.put("items", body.get("items"));
-		result.put("currentPage", page);
-		result.put("total", totalResults);
-		result.put("display", display);
-		result.put("totalPages", totalPages);
+    private int calculateStartIndex(int page) {
+        int startIndex = (page - 1) * ITEMS_PER_PAGE + 1;
+        return Math.min(startIndex, MAX_SEARCHABLE_ITEMS);
+    }
 
-		return ResponseEntity.ok(new BaseResponse<>(BaseResponseStatus.SUCCESS, result));
-	}
+    private Map<String, Object> createSearchResponse(
+            Map<String, Object> searchResult, 
+            int currentPage, 
+            int totalResults, 
+            int totalPages) {
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("items", searchResult.get("items"));
+        response.put("currentPage", currentPage);
+        response.put("total", totalResults);
+        response.put("itemsPerPage", ITEMS_PER_PAGE);
+        response.put("totalPages", totalPages);
+        
+        return response;
+    }
 }
