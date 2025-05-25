@@ -720,4 +720,11 @@ public class TimeDealService {
 	// }
 
 
+
+	public TimeDeal findTimeDealById(Long timeDealId) {
+		return timeDealRepository.findById(timeDealId)
+				.orElseThrow(() -> new EntityNotFoundException("해당 타임딜을 찾을 수 없습니다."));
+	}
+
+
 }
