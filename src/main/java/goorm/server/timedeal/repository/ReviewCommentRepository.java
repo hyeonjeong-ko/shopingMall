@@ -10,7 +10,6 @@ public interface ReviewCommentRepository extends JpaRepository<ReviewComment, Lo
     // 삭제되지 않은 특정 리뷰의 댓글들을 페이지네이션하여 조회
     Page<ReviewComment> findByReviewAndDeletedAtIsNull(Review review, Pageable pageable);
 
-    // 추가로 유용할 수 있는 메서드들
     boolean existsByReviewAndDeletedAtIsNull(Review review);
     long countByReviewAndDeletedAtIsNull(Review review);
 
