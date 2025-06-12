@@ -2,6 +2,9 @@ package goorm.server.timedeal.service;
 
 import goorm.server.timedeal.config.exception.BaseException;
 import goorm.server.timedeal.config.exception.BaseResponseStatus;
+import goorm.server.timedeal.config.exception.domain.ReviewAlreadyExistsException;
+import goorm.server.timedeal.config.exception.domain.ReviewWithoutPurchaseException;
+import goorm.server.timedeal.config.exception.domain.UnauthorizedCommentDeleteException;
 import goorm.server.timedeal.model.Purchase;
 import goorm.server.timedeal.model.ReviewComment;
 import goorm.server.timedeal.model.TimeDeal;
@@ -15,21 +18,29 @@ public class ReviewValidator {
     private final PurchaseService purchaseService;
     private final ReviewQueryService reviewQueryService;
 
-    public void validateReviewRegistration(TimeDeal timeDeal, User user) throws BaseException {
-        Purchase purchase = purchaseService.validatePurchaseExists(user, timeDeal);
-        validateNoExistingReview(purchase);
+    public void validateReviewRegistration(TimeDeal timeDeal, User user) {
+        Purchase purchase = validatePurchaseAndGetDetails(timeDeal, user);
+        validateNoDuplicateReview(purchase);
     }
 
-    public void validateCommentDeletion(ReviewComment comment, User user) throws BaseException {
-        if (canDeleteComment(comment, user)) {
-            return;
+    private Purchase validatePurchaseAndGetDetails(TimeDeal timeDeal, User user) {
+        try {
+            return purchaseService.validatePurchaseExists(user, timeDeal);
+        } catch (ReviewWithoutPurchaseException e) {
+            throw new ReviewWithoutPurchaseException(user.getUserId(), timeDeal.getTimeDealId());
         }
-        throwUnauthorizedCommentDelete();
     }
 
-    private void validateNoExistingReview(Purchase purchase) throws BaseException {
+    private void validateNoDuplicateReview(Purchase purchase) {
         if (reviewQueryService.hasActiveReview(purchase)) {
-            throwDuplicateReviewError();
+            throw new ReviewAlreadyExistsException(purchase);
+        }
+    }
+
+
+    public void validateCommentDeletion(ReviewComment comment, User user) {
+        if (!canDeleteComment(comment, user)) {
+            throw new UnauthorizedCommentDeleteException(comment.getCommentId(), user.getUserId());
         }
     }
 
@@ -48,9 +59,5 @@ public class ReviewValidator {
     // 예외 처리 메서드들을 분리하여 한 곳에서 관리
     private void throwDuplicateReviewError() throws BaseException {
         throw new BaseException(BaseResponseStatus.REVIEW_ALREADY_EXISTS);
-    }
-
-    private void throwUnauthorizedCommentDelete() throws BaseException {
-        throw new BaseException(BaseResponseStatus.UNAUTHORIZED_COMMENT_DELETE);
     }
 }
