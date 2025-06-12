@@ -3,7 +3,6 @@ package goorm.server.timedeal.config.exception;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -40,5 +39,14 @@ public class BaseResponse<T> { // API 요청 응답 DTO
 		this.code = status.getCode();
 		this.result = result;
 	}
+
+	// 커스텀 메시지를 위한 생성자
+	public BaseResponse(BaseResponseStatus status, String customMessage, T result) {
+		this.isSuccess = status.isSuccess();
+		this.message = customMessage;  // 커스텀 메시지 사용
+		this.code = status.getCode();
+		this.result = result;
+	}
+
 }
 
