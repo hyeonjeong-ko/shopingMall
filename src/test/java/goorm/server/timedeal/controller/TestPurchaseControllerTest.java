@@ -1,64 +1,112 @@
-package goorm.server.timedeal.controller;
+package goorm.server.timedeal.controller.test_controller;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
+import goorm.server.timedeal.config.exception.BaseResponseStatus;
+import goorm.server.timedeal.dto.ResPurchaseDto;
+import goorm.server.timedeal.service.TimeDealService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
-import goorm.server.timedeal.service.TimeDealService;
-
-@SpringBootTest
+@WebMvcTest(TestPurchaseController.class)
 class TestPurchaseControllerTest {
 
-	@Autowired
-	private TimeDealService timeDealService; // TimeDealService 직접 주입
+    @Autowired
+    private MockMvc mockMvc;
 
-	@Test
-	void testConcurrentPurchases() throws InterruptedException {
-		int numberOfThreads = 100; // 동시에 요청을 보낼 쓰레드 수
-		ExecutorService executorService = Executors.newFixedThreadPool(32); // 스레드 풀 크기 제한
-		CountDownLatch latch = new CountDownLatch(numberOfThreads); // 스레드 완료 대기용
-		CountDownLatch startLatch = new CountDownLatch(1); // 동시 시작용
+    @MockBean
+    private TimeDealService timeDealService;
 
-		Long dealId = 28L;  // 테스트할 타임딜 ID
-		Long userId = 2L;  // 테스트할 유저 ID
-		int quantity = 1;  // 구매 수량
+    @Nested
+    @DisplayName("DB Lock을 사용한 타임딜 구매 테스트")
+    class PurchaseWithDBLock {
+        
+        @Test
+        @DisplayName("정상적인 구매 요청시 성공 응답을 반환해야 한다")
+        void successfulPurchase_ShouldReturnOkResponse() throws Exception {
+            // given
+            given(timeDealService.purchaseTimeDealwithDBLock(anyLong(), anyInt(), anyLong()))
+                .willReturn("구매 성공");
 
-		for (int i = 0; i < numberOfThreads; i++) {
-			executorService.submit(() -> {
-				try {
-					startLatch.await(); // 모든 스레드가 준비될 때까지 대기
-					timeDealService.testPurchaseTimeDeal(dealId, userId, quantity);
-				} catch (IllegalStateException e) {
-					// 재고 부족 예외 처리
-					System.err.println("Stock unavailable: " + e.getMessage());
-				} catch (Exception e) {
-					// 기타 예외 처리
-					e.printStackTrace();
-				} finally {
-					latch.countDown(); // 스레드 완료 시 카운트 감소
-				}
-			});
-		}
+            // when & then
+            mockMvc.perform(post("/api/test/1/purchases")
+                    .param("userId", "1")
+                    .param("quantity", "1")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value(BaseResponseStatus.SUCCESS.getCode()));
+        }
 
-		// 모든 스레드 동시에 시작
-		startLatch.countDown();
+        @Test
+        @DisplayName("재고 부족시 BAD_REQUEST와 함께 실패 응답을 반환해야 한다")
+        void outOfStock_ShouldReturnBadRequest() throws Exception {
+            // given
+            doThrow(new IllegalStateException("재고 부족"))
+                .when(timeDealService)
+                .purchaseTimeDealwithDBLock(anyLong(), anyInt(), anyLong());
 
-		// 모든 스레드가 완료될 때까지 대기
-		latch.await();
+            // when & then
+            mockMvc.perform(post("/api/test/1/purchases")
+                    .param("userId", "1")
+                    .param("quantity", "1")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.isSuccess").value(false))
+                .andExpect(jsonPath("$.code").value(BaseResponseStatus.STOCK_UNAVAILABLE.getCode()));
+        }
+    }
 
-		// 남은 재고 확인
-		int remainingStock = timeDealService.getRemainingStock(dealId);
-		System.out.println("Remaining stock: " + remainingStock);
+    @Nested
+    @DisplayName("Redis를 사용한 타임딜 구매 테스트")
+    class PurchaseWithRedis {
 
-		// 재고가 정확히 0인지 검증
-		assertEquals(0, remainingStock, "Stock should be 0 after all purchases");
+        @Test
+        @DisplayName("Redis를 통한 정상 구매시 성공 응답을 반환해야 한다")
+        void successfulPurchase_ShouldReturnOkResponse() throws Exception {
+            // given
+            ResPurchaseDto mockResponse = new ResPurchaseDto(/* 필요한 데이터 설정 */);
+            given(timeDealService.testPurchaseTimeDealByRedis(anyLong(), anyLong(), anyInt()))
+                .willReturn(mockResponse);
 
-		executorService.shutdown();
-	}
+            // when & then
+            mockMvc.perform(post("/api/test/1/purchases/redis")
+                    .param("userId", "1")
+                    .param("quantity", "1")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value(BaseResponseStatus.SUCCESS.getCode()));
+        }
+
+        @Test
+        @DisplayName("Redis에서 재고 부족시 BAD_REQUEST와 함께 실패 응답을 반환해야 한다")
+        void outOfStock_ShouldReturnBadRequest() throws Exception {
+            // given
+            doThrow(new IllegalStateException("Redis 재고 부족"))
+                .when(timeDealService)
+                .testPurchaseTimeDealByRedis(anyLong(), anyLong(), anyInt());
+
+            // when & then
+            mockMvc.perform(post("/api/test/1/purchases/redis")
+                    .param("userId", "1")
+                    .param("quantity", "1")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.isSuccess").value(false))
+                .andExpect(jsonPath("$.code").value(BaseResponseStatus.STOCK_UNAVAILABLE.getCode()));
+        }
+    }
 }
