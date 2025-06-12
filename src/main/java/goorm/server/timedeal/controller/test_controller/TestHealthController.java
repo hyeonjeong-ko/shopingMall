@@ -14,7 +14,7 @@ public class TestHealthController {
 
 	@GetMapping("/hello")
 	public String sayHello() {
-		return "Hello, Goorm Team2 TimeDeal!";
+		return "Hello, TimeDeal!";
 	}
 
 

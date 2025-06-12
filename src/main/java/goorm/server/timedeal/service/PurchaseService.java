@@ -1,7 +1,6 @@
 package goorm.server.timedeal.service;
 
-import goorm.server.timedeal.config.exception.BaseException;
-import goorm.server.timedeal.config.exception.BaseResponseStatus;
+import goorm.server.timedeal.config.exception.domain.ReviewWithoutPurchaseException;
 import goorm.server.timedeal.dto.ResPurchaseDto;
 import goorm.server.timedeal.model.Purchase;
 import goorm.server.timedeal.model.TimeDeal;
@@ -50,10 +49,16 @@ public class PurchaseService {
         return purchase;
     }
 
-    public Purchase validatePurchaseExists(User user, TimeDeal timeDeal) throws BaseException {
+
+
+    public Purchase validatePurchaseExists(User user, TimeDeal timeDeal) {
         return purchaseRepository.findByUserAndTimeDeal(user, timeDeal)
-                .orElseThrow(() -> new BaseException(BaseResponseStatus.PURCHASE_NOT_FOUND));
+                .orElseThrow(() -> new ReviewWithoutPurchaseException(
+                        user.getUserId(),
+                        timeDeal.getTimeDealId()
+                ));
     }
+
 
 
 }
