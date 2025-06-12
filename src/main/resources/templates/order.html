@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>주문/결제</title>
+    <link as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/>
+    <link href="/css/common.css" rel="stylesheet">
+    <style>
+        .order-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .product-info {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .product-info img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            margin-right: 20px;
+        }
+
+        .price-info {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .total-price {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #f00;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .payment-method {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .payment-method.selected {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+
+        .order-button {
+            width: 100%;
+            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .order-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <div th:replace="~{header :: header}"></div>
+
+    <div class="order-container">
+        <h1>주문/결제</h1>
+        
+        <!-- 상품 정보 섹션 -->
+        <div class="section">
+            <h2>상품 정보</h2>
+            <div class="product-info">
+                <img alt="상품 이미지" th:src="${productDetails.productImageUrl}">
+                <div>
+                    <h3 th:text="${productDetails.productName}">상품명</h3>
+                    <p th:text="'수량: 1개'"></p>
+                    <p th:text="'가격: ₩' + ${productDetails.discountPrice}">가격</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 주문자 정보 -->
+        <div class="section">
+            <h2>주문자 정보</h2>
+            <div class="form-group">
+                <label for="orderName">이름</label>
+                <input id="orderName" required th:value="${user.name}" type="text">
+            </div>
+            <div class="form-group">
+                <label for="orderPhone">연락처</label>
+                <input id="orderPhone" required th:value="${user.phone}" type="tel">
+            </div>
+            <div class="form-group">
+                <label for="orderEmail">이메일</label>
+                <input id="orderEmail" required th:value="${user.email}" type="email">
+            </div>
+        </div>
+
+        <!-- 배송지 정보 -->
+        <div class="section">
+            <h2>배송지 정보</h2>
+            <div class="form-group">
+                <label for="recipientName">수령인</label>
+                <input id="recipientName" required type="text">
+            </div>
+            <div class="form-group">
+                <label for="recipientPhone">연락처</label>
+                <input id="recipientPhone" required type="tel">
+            </div>
+            <div class="form-group">
+                <label for="address">주소</label>
+                <input id="address" required type="text">
+                <button onclick="searchAddress()" style="margin-top: 5px;">주소 검색</button>
+            </div>
+            <div class="form-group">
+                <label for="addressDetail">상세주소</label>
+                <input id="addressDetail" required type="text">
+            </div>
+        </div>
+
+        <!-- 결제 정보 -->
+        <div class="section">
+            <h2>결제 정보</h2>
+            <div class="price-info">
+                <div class="price-row">
+                    <span>상품금액</span>
+                    <span th:text="'₩' + ${productDetails.discountPrice}"></span>
+                </div>
+                <div class="price-row">
+                    <span>배송비</span>
+                    <span>₩3,000</span>
+                </div>
+                <div class="price-row total-price">
+                    <span>총 결제금액</span>
+                    <span th:text="'₩' + (${productDetails.discountPrice} + 3000)"></span>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;">결제 수단 선택</h3>
+            <div class="payment-methods">
+                <div class="payment-method" onclick="selectPayment(this)">신용카드</div>
+                <div class="payment-method" onclick="selectPayment(this)">무통장입금</div>
+                <div class="payment-method" onclick="selectPayment(this)">카카오페이</div>
+                <div class="payment-method" onclick="selectPayment(this)">네이버페이</div>
+            </div>
+        </div>
+
+        <button class="order-button" onclick="processOrder()">결제하기</button>
+    </div>
+
+    <!-- 푸터 -->
+    <div th:replace="~{footer :: footer}"></div>
+
+    <script>
+        function searchAddress() {
+            // 카카오 주소 검색 API 연동
+            // TODO: 구현 필요
+        }
+
+        function selectPayment(element) {
+            // 선택된 결제 수단 스타일 변경
+            document.querySelectorAll('.payment-method').forEach(el => {
+                el.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+
+        function processOrder() {
+            // 주문 처리 로직
+            // TODO: 구현 필요
+        }
+    </script>
+</body>
+</html>
